@@ -191,12 +191,14 @@ router.get(
       const [__viewCount, restaurant, cuisines] = await Promise.all([
         client.hIncrBy(restaurantKey, "viewCount", 1),
         client.hGetAll(restaurantKey),
+        // Gets all the cuisines under that restaurant
         client.sMembers(restaurantCuisinesKeyById(restaurantId)),
       ]);
 
       // Currently, even if the id doesn't exist, we'll return a success response
       // We don't want that, however we aren't going to bloat this function with
       // error checking. Instead, we'll leave that for the middleware
+      // Makes sure that all the cuisines are included in the response as well
       return successResponse(res, { ...restaurant, cuisines });
     } catch (err) {
       next(err);
