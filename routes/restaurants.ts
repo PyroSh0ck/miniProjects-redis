@@ -9,7 +9,7 @@ import {
   reviewDetailsKeyById,
   reviewKeyById,
 } from "../utils/keys.js";
-import { successResponse } from "../utils/responses.js";
+import { errorResponse, successResponse } from "../utils/responses.js";
 import { checkRestaurantExists } from "../middlewares/checkRestaurantId.js";
 
 const router = express.Router();
@@ -125,6 +125,38 @@ router.get(
     }
   },
 );
+
+router.delete(
+  "/:restaurantId/reviews/:reviewId",
+  checkRestaurantExists,
+  async (
+    req: Request<{ restaurantId: string; reviewId: string }>,
+    res,
+    next,
+  ) => {
+    const { restaurantId, reviewId } = req.params;
+
+    try {
+      const client = await initializeRedisClient();
+      const reviewKey = reviewKeyById(restaurantId);
+      const reviewDetailsKey = reviewDetailsKeyById(reviewKey);
+
+      const [removeResult, deleteResult] = await Promise.all([
+        client.lRem(reviewKey, 0, reviewId),
+        client.del(reviewDetailsKey),
+      ]);
+
+      if (removeResult === 0 && deleteResult === 0) {
+        return errorResponse(res, 404, "Review not found");
+      }
+
+      return successResponse(res, reviewId, "Review successfully deleted");
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
 // Note that the url would be of the form /restaurants/apo820jfsk (which is the restaurant id)
 // Also the middleware file (checkRestaurantId) runs before the request handler for validation
 router.get(
