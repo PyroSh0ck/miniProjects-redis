@@ -188,15 +188,16 @@ router.get(
 
       // Note that the Promise.all method allows us to execute multiple
       // async operation concurrently
-      const [__viewCount, restaurant] = await Promise.all([
+      const [__viewCount, restaurant, cuisines] = await Promise.all([
         client.hIncrBy(restaurantKey, "viewCount", 1),
         client.hGetAll(restaurantKey),
+        client.sMembers(restaurantCuisinesKeyById(restaurantId)),
       ]);
 
       // Currently, even if the id doesn't exist, we'll return a success response
       // We don't want that, however we aren't going to bloat this function with
       // error checking. Instead, we'll leave that for the middleware
-      return successResponse(res, restaurant);
+      return successResponse(res, { ...restaurant, cuisines });
     } catch (err) {
       next(err);
     }
