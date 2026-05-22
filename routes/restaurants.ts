@@ -1,11 +1,12 @@
 import express, { type Request } from "express";
-import { validate } from "../middlewares/validate";
-import { type Restaurant, RestaurantSchema } from "../schemas/restaurant";
-import { initializeRedisClient } from "../utils/client";
+import { validate } from "../middlewares/validate.js";
+import { type Restaurant, RestaurantSchema } from "../schemas/restaurant.js";
+import { type Review, ReviewSchema } from "../schemas/reviews.js";
+import { initializeRedisClient } from "../utils/client.js";
 import { nanoid } from "nanoid";
-import { restaurantKeyById } from "../utils/keys";
-import { successResponse } from "../utils/responses";
-import { checkRestaurantExists } from "../middlewares/checkRestaurantId";
+import { restaurantKeyById } from "../utils/keys.js";
+import { successResponse } from "../utils/responses.js";
+import { checkRestaurantExists } from "../middlewares/checkRestaurantId.js";
 
 const router = express.Router();
 
@@ -37,6 +38,21 @@ router.post("/", validate(RestaurantSchema), async (req, res, next) => {
   }
 });
 
+// Express will match all of the endpoints in the order that we define them.
+// So if you have something like /:restaurantId that should be at the bottom.
+// For example, if you put /:restaurantId/beans, it would take "restaurantId/beans"
+// as the search parameter, instead of just beans, since it would run /:restaurantId
+// first.
+
+router.post(
+  "/:restaurantId/reviews",
+  checkRestaurantExists,
+  validate(ReviewSchema),
+  async (req: Request<{ restaurantId: string }>, res, next) => {
+    const { restaurantId } = req.params;
+    const data = req.body as Review;
+  },
+);
 // Note that the url would be of the form /restaurants/apo820jfsk (which is the restaurant id)
 // Also the middleware file (checkRestaurantId) runs before the request handler for validation
 router.get(
@@ -51,7 +67,7 @@ router.get(
       const client = await initializeRedisClient();
       const restaurantKey = restaurantKeyById(restaurantId);
 
-      // Note that the Promise.all method allows us to execute multiple 
+      // Note that the Promise.all method allows us to execute multiple
       // async operation concurrently
       const [viewCount, restaurant] = await Promise.all([
         client.hIncrBy(restaurantKey, "viewCount", 1),

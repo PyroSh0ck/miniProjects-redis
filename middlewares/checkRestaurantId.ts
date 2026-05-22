@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
-import { initializeRedisClient } from "../utils/client";
-import { restaurantKeyById } from "../utils/keys";
-import { errorResponse } from "../utils/responses";
+import { initializeRedisClient } from "../utils/client.js";
+import { restaurantKeyById } from "../utils/keys.js";
+import { errorResponse } from "../utils/responses.js";
 
 // Because of a recent express update, all types sent as params will be string | string[]
 // But since this is only a ts thing and not an issue to deal with at runtime,
