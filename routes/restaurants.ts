@@ -1,10 +1,11 @@
 import express, { type Request } from "express";
-import { validate } from "../middlewares/validate.ts";
-import { type Restaurant, RestaurantSchema } from "../schemas/restaurant.ts";
-import { initializeRedisClient } from "../utils/client.ts";
+import { validate } from "../middlewares/validate";
+import { type Restaurant, RestaurantSchema } from "../schemas/restaurant";
+import { initializeRedisClient } from "../utils/client";
 import { nanoid } from "nanoid";
-import { restaurantKeyById } from "../utils/keys.ts";
-import { successResponse } from "../utils/responses.ts";
+import { restaurantKeyById } from "../utils/keys";
+import { successResponse } from "../utils/responses";
+import { checkRestaurantExists } from "../middlewares/checkRestaurantId";
 
 const router = express.Router();
 
@@ -37,8 +38,10 @@ router.post("/", validate(RestaurantSchema), async (req, res, next) => {
 });
 
 // Note that the url would be of the form /restaurants/apo820jfsk (which is the restaurant id)
+// Also the middleware file (checkRestaurantId) runs before the request handler for validation
 router.get(
   "/:restaurantId",
+  checkRestaurantExists,
   async (req: Request<{ restaurantId: string }>, res, next) => {
     // This is just getting the restaurantId from the url
     const { restaurantId } = req.params;
@@ -47,7 +50,13 @@ router.get(
       // This is pretty standard, just connecting to redis client and getting id
       const client = await initializeRedisClient();
       const restaurantKey = restaurantKeyById(restaurantId);
-      const restaurant = await client.hGetAll(restaurantKey);
+
+      // Note that the Promise.all method allows us to execute multiple 
+      // async operation concurrently
+      const [viewCount, restaurant] = await Promise.all([
+        client.hIncrBy(restaurantKey, "viewCount", 1),
+        client.hGetAll(restaurantKey),
+      ]);
 
       // Currently, even if the id doesn't exist, we'll return a success response
       // We don't want that, however we aren't going to bloat this function with
