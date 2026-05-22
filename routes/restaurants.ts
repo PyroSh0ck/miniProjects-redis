@@ -4,7 +4,11 @@ import { type Restaurant, RestaurantSchema } from "../schemas/restaurant.js";
 import { type Review, ReviewSchema } from "../schemas/reviews.js";
 import { initializeRedisClient } from "../utils/client.js";
 import { nanoid } from "nanoid";
-import { restaurantKeyById } from "../utils/keys.js";
+import {
+  restaurantKeyById,
+  reviewDetailsKeyById,
+  reviewKeyById,
+} from "../utils/keys.js";
 import { successResponse } from "../utils/responses.js";
 import { checkRestaurantExists } from "../middlewares/checkRestaurantId.js";
 
@@ -51,6 +55,40 @@ router.post(
   async (req: Request<{ restaurantId: string }>, res, next) => {
     const { restaurantId } = req.params;
     const data = req.body as Review;
+
+    try {
+      // Basics
+      const client = await initializeRedisClient();
+      const reviewId = nanoid();
+
+      // Remember that the reviewKey is based off the restaurant
+      // We'll be adding to the linked list for the restaurant
+      // Review details will contain all the necessary information
+      const reviewKey = reviewKeyById(restaurantId);
+      const reviewDetailsKey = reviewDetailsKeyById(reviewId);
+
+      // Data for each review, we're passing in the restaurantId as well for convenience in the future
+      // Since this isn't tied to the restaurant at all currently
+      const reviewData = {
+        id: reviewId,
+        ...data,
+        timestamp: Date.now(),
+        restaurantId,
+      };
+
+      // Promise.all like normal so that you can have concurrent async function calls
+      // The first one adds the reviewId to the end of the linked list
+      // The next one adds the hash of the reviewData to the reviewDetailsKey
+      await Promise.all([
+        client.lPush(reviewKey, reviewId),
+        client.hSet(reviewDetailsKey, reviewData),
+      ]);
+
+      // Returns response like normal :D
+      return successResponse(res, reviewData, "Review successfully added!");
+    } catch (err) {
+      next(err);
+    }
   },
 );
 // Note that the url would be of the form /restaurants/apo820jfsk (which is the restaurant id)
