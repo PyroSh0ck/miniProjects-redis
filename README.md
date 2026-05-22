@@ -93,3 +93,16 @@ Here are the cmds:
 - SISMEMBER - tests a string for set membership
 - SINTER - returns the intersection between 2 sets
 - SCARD - returns cardinality of a set
+
+### Sorted Sets
+
+Unique just like a string, and they're ordered by a "score", which is pretty
+useful for creating things like leaderboards. In my case, I'll be using it
+for restaurant ratings.
+
+Here are some functions:
+
+- ZADD - adds a new member + score to a sorted set
+- ZRANGE - returns members of a sorted set within a given range
+- ZRANK - returns the rank of the member
+- ZREVRANK - returns the rank of the member if the set is sorted in reverse
