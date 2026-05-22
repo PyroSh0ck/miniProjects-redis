@@ -6,6 +6,9 @@ import express from "express";
 import restaurantsRouter from "./routes/restaurants.ts";
 import cuisinesRouter from "./routes/cuisines.ts";
 
+// This module is for error handling
+import { errorHandler } from "./middlewares/errorHandler.ts";
+
 const PORT = process.env.PORT || 3000;
 const app = express();
 app.use(express.json());
@@ -14,6 +17,8 @@ app.use(express.json());
 app.use("/restaurants", restaurantsRouter);
 app.use("/cuisines", cuisinesRouter);
 
+// Make sure that our app uses the middleware we define for our error handler
+app.use(errorHandler);
 app
   .listen(PORT, () => {
     console.log(`Application running on port: ${PORT}`);
