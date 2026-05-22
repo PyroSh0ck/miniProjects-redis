@@ -1,4 +1,4 @@
-import express from "express";
+import express, { type Request } from "express";
 import { validate } from "../middlewares/validate.ts";
 import { type Restaurant, RestaurantSchema } from "../schemas/restaurant.ts";
 import { initializeRedisClient } from "../utils/client.ts";
@@ -35,5 +35,28 @@ router.post("/", validate(RestaurantSchema), async (req, res, next) => {
     next(err);
   }
 });
+
+// Note that the url would be of the form /restaurants/apo820jfsk (which is the restaurant id)
+router.get(
+  "/:restaurantId",
+  async (req: Request<{ restaurantId: string }>, res, next) => {
+    // This is just getting the restaurantId from the url
+    const { restaurantId } = req.params;
+
+    try {
+      // This is pretty standard, just connecting to redis client and getting id
+      const client = await initializeRedisClient();
+      const restaurantKey = restaurantKeyById(restaurantId);
+      const restaurant = await client.hGetAll(restaurantKey);
+
+      // Currently, even if the id doesn't exist, we'll return a success response
+      // We don't want that, however we aren't going to bloat this function with
+      // error checking. Instead, we'll leave that for the middleware
+      return successResponse(res, restaurant);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
 
 export default router;
