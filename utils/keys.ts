@@ -16,3 +16,9 @@ export const reviewKeyById = (id: string) => getKeyName("reviews", id);
 // Note that both this and reviewKey will return a list, not an individual review
 export const reviewDetailsKeyById = (id: string) =>
   getKeyName("review_details", id);
+
+// These are the helper functions for each of the 3 sets
+export const cuisinesKey = getKeyName("cuisines");
+export const cuisineKey = (name: string) => getKeyName("cuisine", name);
+export const restaurantCuisinesKeyById = (id: string) =>
+  getKeyName("restaurant_cuisine", id);
