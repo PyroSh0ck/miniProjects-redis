@@ -5,6 +5,9 @@ import { type Review, ReviewSchema } from "../schemas/reviews.js";
 import { initializeRedisClient } from "../utils/client.js";
 import { nanoid } from "nanoid";
 import {
+  cuisineKey,
+  cuisinesKey,
+  restaurantCuisinesKeyById,
   restaurantKeyById,
   reviewDetailsKeyById,
   reviewKeyById,
@@ -30,9 +33,21 @@ router.post("/", validate(RestaurantSchema), async (req, res, next) => {
     const hashData = { id, name: data.name, location: data.location };
 
     // Adding the restaurant key and its hash to redis field-value pair
-    // addResult will be the number of new fields added
-    const addResult = await client.hSet(restaurantKey, hashData);
-    console.log(`Number of fields added: ${addResult}`);
+    // Now we're also going to add to each of the 3 sets containing our cuisines
+    // The first one is just going to be a set of all the cuisines we have
+    // The second one is going to be all the restaurants of a certain cuisine
+    // The third one is going to be all the cuisines in a certain restaurant
+    await Promise.all([
+      ...data.cuisines.map((cuisine) =>
+        Promise.all([
+          client.sAdd(cuisinesKey, cuisine),
+          client.sAdd(cuisineKey(cuisine), id),
+          client.sAdd(restaurantCuisinesKeyById(id), cuisine),
+        ]),
+      ),
+      // And then we finally add the restaurant key and its hash (not saving the cuisines here ofc)
+      client.hSet(restaurantKey, hashData),
+    ]);
 
     // Return a success (with the hash data in case you want to use it in the frontend)
     return successResponse(res, hashData, "Added new restaurant");
