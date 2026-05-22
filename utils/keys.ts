@@ -8,3 +8,11 @@ export function getKeyName(...args: string[]) {
 }
 
 export const restaurantKeyById = (id: string) => getKeyName("restaurants", id);
+// Note that the id is going to be the restaurant id, since we want to get all the reviews per restaurant
+// It will look something like this: miniProjects-redis:reviews:restaurants:[restaurantID]
+export const reviewKeyById = (id: string) => getKeyName("reviews", id);
+// And this one will be the review key id, so it would look something like this:
+// miniProjects-redis:review_details:reviews:restaurants:[restaurantID]
+// Note that both this and reviewKey will return a list, not an individual review
+export const reviewDetailsKeyById = (id: string) =>
+  getKeyName("review_details", id);
