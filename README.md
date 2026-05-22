@@ -59,3 +59,19 @@ For future reference, there are also some useful functions to remember:
 - HGETALL - returns all fields and values of the hash stored at key.
 - HMGET - returns the values at one or more given fields
 - HINCRBY - increments the value at a given field by the integer provided.
+
+### Lists
+
+Lists are simply just a linked list of string values, which are optimized for
+adding/removing a head or a tail. For example, lets say you have a list of reviews.
+You can get the newest or the top 5 newest results very quickly, much faster than
+if you had some kind of array.
+
+For future ref, here are some list commands (just like hashes):
+
+- LPUSH/RPUSH - add to head/tail
+- LPOP/RPOP - remove (and return) from head/tail
+- LLEN - returns length
+- LMOVE - moves from one list to another
+- LRANGE - extracts a range of elements
+- LTRIM - reduces a list to a specified range
