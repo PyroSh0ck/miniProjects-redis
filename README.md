@@ -75,3 +75,21 @@ For future ref, here are some list commands (just like hashes):
 - LMOVE - moves from one list to another
 - LRANGE - extracts a range of elements
 - LTRIM - reduces a list to a specified range
+
+### Sets
+
+Sets are just unordered collections and all strings must be unique. You can also
+utilize set operations (such as intersections, unions, etc). For this use case,
+we'll be tracking all the unique cuisines that have been added to the restaurant
+directory. Like say we added 10 restaurants that serve Italian cuisine, we
+don't want to say we offer Italian 10 times, we only want it once. We'll be using
+3 sets: 1 for all cuisines, 1 for all restaurants that have a certain cuisine,
+and 1 for all cuisines in a certain restaurant.
+
+Here are the cmds:
+
+- SADD - adds a new member
+- SREM - removes a member
+- SISMEMBER - tests a string for set membership
+- SINTER - returns the intersection between 2 sets
+- SCARD - returns cardinality of a set
