@@ -91,6 +91,40 @@ router.post(
     }
   },
 );
+
+router.get(
+  "/:restaurantId/reviews",
+  checkRestaurantExists,
+  async (req: Request<{ restaurantId: string }>, res, next) => {
+    const { restaurantId } = req.params;
+
+    // We're going to be using pagination here to make things nicer and improve performance
+    const { page = 1, limit = 10 } = req.query; // You can always add ?page=2&limit=20
+
+    // To get the first index, you basically want the (page - 1) * 10 (since page 1 will be from 0 to 9, then page 2 will be from 10-19, etc)
+    const startIndex = (Number(page) - 1) * Number(limit);
+    const endIndex = startIndex + Number(limit) - 1; // So if we have 10 items per page, the 10th item is going to be 9 indexes past the first item
+
+    try {
+      // Pretty standard again
+      const client = await initializeRedisClient();
+      const reviewKey = reviewKeyById(restaurantId);
+
+      // lRange is also pretty self-explanatory, note that this only stores strings
+      // a linkedlist like this can't store objects
+      const reviewIds = await client.lRange(reviewKey, startIndex, endIndex);
+
+      // So we use the ids to get all of the objects via reviewDetails
+      const reviews = await Promise.all(
+        reviewIds.map((id) => client.hGetAll(reviewDetailsKeyById(id))),
+      );
+
+      return successResponse(res, reviews);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
 // Note that the url would be of the form /restaurants/apo820jfsk (which is the restaurant id)
 // Also the middleware file (checkRestaurantId) runs before the request handler for validation
 router.get(
@@ -107,7 +141,7 @@ router.get(
 
       // Note that the Promise.all method allows us to execute multiple
       // async operation concurrently
-      const [viewCount, restaurant] = await Promise.all([
+      const [__viewCount, restaurant] = await Promise.all([
         client.hIncrBy(restaurantKey, "viewCount", 1),
         client.hGetAll(restaurantKey),
       ]);
