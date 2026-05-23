@@ -11,6 +11,7 @@ import {
   restaurantKeyById,
   reviewDetailsKeyById,
   reviewKeyById,
+  restaurantByRatingKey,
 } from "../utils/keys.js";
 import { errorResponse, successResponse } from "../utils/responses.js";
 import { checkRestaurantExists } from "../middlewares/checkRestaurantId.js";
@@ -47,6 +48,12 @@ router.post("/", validate(RestaurantSchema), async (req, res, next) => {
       ),
       // And then we finally add the restaurant key and its hash (not saving the cuisines here ofc)
       client.hSet(restaurantKey, hashData),
+
+      // Adding the restaurant's rating to the sorted set
+      client.zAdd(restaurantByRatingKey, {
+        score: 0,
+        value: id,
+      }),
     ]);
 
     // Return a success (with the hash data in case you want to use it in the frontend)
@@ -82,6 +89,9 @@ router.post(
       const reviewKey = reviewKeyById(restaurantId);
       const reviewDetailsKey = reviewDetailsKeyById(reviewId);
 
+      // Defined this here so it could be reused for sorted sets + cumulative star rating
+      const restaurantKey = restaurantKeyById(restaurantId);
+
       // Data for each review, we're passing in the restaurantId as well for convenience in the future
       // Since this isn't tied to the restaurant at all currently
       const reviewData = {
@@ -94,11 +104,27 @@ router.post(
       // Promise.all like normal so that you can have concurrent async function calls
       // The first one adds the reviewId to the end of the linked list
       // The next one adds the hash of the reviewData to the reviewDetailsKey
-      await Promise.all([
+      const [reviewCount, __setResult, totalStars] = await Promise.all([
         client.lPush(reviewKey, reviewId),
         client.hSet(reviewDetailsKey, reviewData),
+
+        // Incrementing the total stars by the rating so we can easily calc the average
+        client.hIncrByFloat(restaurantKey, "totalStars", data.rating),
       ]);
 
+      // We could just do totalStars / reviewCount, however to make sure its 1 decimal place
+      // You can use .toFixed to turn it into a string with 1 decimal place
+      // And then cast it back into a number
+      const averageRating = Number(
+        (Number(totalStars) / reviewCount).toFixed(1),
+      );
+      await Promise.all([
+        client.zAdd(restaurantByRatingKey, {
+          score: averageRating,
+          value: restaurantId,
+        }),
+        client.hSet(restaurantKey, "avgStars", averageRating),
+      ]);
       // Returns response like normal :D
       return successResponse(res, reviewData, "Review successfully added!");
     } catch (err) {
