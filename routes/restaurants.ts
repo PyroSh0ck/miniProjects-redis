@@ -1,6 +1,11 @@
 import express, { type Request } from "express";
 import { validate } from "../middlewares/validate.js";
-import { type Restaurant, RestaurantSchema } from "../schemas/restaurant.js";
+import {
+  type Restaurant,
+  RestaurantSchema,
+  type RestaurantDetails,
+  RestaurantDetailsSchema,
+} from "../schemas/restaurant.js";
 import { type Review, ReviewSchema } from "../schemas/reviews.js";
 import { initializeRedisClient } from "../utils/client.js";
 import { nanoid } from "nanoid";
@@ -13,6 +18,7 @@ import {
   reviewKeyById,
   restaurantByRatingKey,
   weatherKeyById,
+  restaurantDetailsKeyById,
 } from "../utils/keys.js";
 import { errorResponse, successResponse } from "../utils/responses.js";
 import { checkRestaurantExists } from "../middlewares/checkRestaurantId.js";
@@ -97,6 +103,48 @@ router.post("/", validate(RestaurantSchema), async (req, res, next) => {
   }
 });
 
+router.post(
+  "/:restaurantId/details",
+  checkRestaurantExists,
+  validate(RestaurantDetailsSchema),
+  async (req: Request<{ restaurantId: string }>, res, next) => {
+    const { restaurantId } = req.params;
+    const data = req.body as RestaurantDetails;
+    try {
+      const client = await initializeRedisClient();
+      const restaurantDetailsKey = restaurantDetailsKeyById(restaurantId);
+
+      // The second argument is the path, and the path right now
+      // is the root, but if you wanted to, you could set a
+      // particular property in the JSON tree
+      // For example, you could set
+      // $.links.somethingelse
+      await client.json.set(restaurantDetailsKey, ".", data);
+      return successResponse(res, {}, "Restaurant details added!");
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+router.get(
+  "/:restaurantId/details",
+  checkRestaurantExists,
+  async (req: Request<{ restaurantId: string }>, res, next) => {
+    const { restaurantId } = req.params;
+    try {
+      const client = await initializeRedisClient();
+      const restaurantDetailsKey = restaurantDetailsKeyById(restaurantId);
+
+      // You can add a second argument, which is the path like I mentioned before
+      // which would look something like this: json.get(..., { path: $.links.smth })
+      const details = await client.json.get(restaurantDetailsKey);
+      return successResponse(res, details);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
 router.get(
   "/:restaurantId/weather",
   checkRestaurantExists,
@@ -142,9 +190,9 @@ router.get(
       );
 
       // This is for processing the result, and for adding it to
-      // the Redis cache. I also added the 1 hour TTL, which is 
-      // added via the extra option and the EX field (expiry). 
-      // It takes an input of seconds in, so you'd use 60*60 = 
+      // the Redis cache. I also added the 1 hour TTL, which is
+      // added via the extra option and the EX field (expiry).
+      // It takes an input of seconds in, so you'd use 60*60 =
       // 3600 seconds for an hour
       if (apiResponse.status === 200) {
         const json = await apiResponse.json();
