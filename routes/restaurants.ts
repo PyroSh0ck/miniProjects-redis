@@ -70,6 +70,16 @@ router.post("/", validate(RestaurantSchema), async (req, res, next) => {
     // Now that we have the id, we can get the key
     const restaurantKey = restaurantKeyById(id);
 
+    // This is just for determining whether there is already
+    // a restaurant with the same name/location as the one
+    // you're trying to create
+    const bloomString = `${data.name}:${data.location}`;
+    const seenBefore = client.bf.exists(bloomKey, bloomString);
+
+    // if one existe then error :(
+    if (seenBefore) {
+      return errorResponse(res, 409, "Restaurant already exists");
+    }
     // The object that we're going to hash
     const hashData = { id, name: data.name, location: data.location };
 
