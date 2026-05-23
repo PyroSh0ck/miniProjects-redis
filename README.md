@@ -118,3 +118,14 @@ for that location in the cache, with a TTL(expiry time) of 1 hour.
 One more thing Redis can do is store complex JSON objects (although
 this functionality is only available via Redis stack or a separate
 Redis docker image). I'll still be adding it though.
+
+### Redis Searching
+
+Another really cool thing that Redis can do is advanced querying and
+searching (like you can with SQL). What you'd need to setup though
+is an index (which is I'll do through a script you run one time), which
+defines all the different fields and type (so like hash, set, list, etc)
+that you'll be querying through. It's a powerful querying language, and
+you can do stuff like geospatial queries, aggregations, vector search,
+full-text search, incremental indexing on documents, etc.
+
