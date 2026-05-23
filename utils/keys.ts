@@ -25,3 +25,6 @@ export const restaurantCuisinesKeyById = (id: string) =>
 
 // This is the helper function for sorted sets:
 export const restaurantByRatingKey = getKeyName("restaurants_by_rating");
+
+// This one is for caching the results from an external api (the weather api)
+export const weatherKeyById = (id: string) => getKeyName("weather", id);
