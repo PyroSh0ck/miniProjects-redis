@@ -18,6 +18,38 @@ import { checkRestaurantExists } from "../middlewares/checkRestaurantId.js";
 
 const router = express.Router();
 
+router.get("/", async (req, res, next) => {
+  const { page = 1, limit = 10 } = req.query; // query params are the same as normal: ?page=2&limit=30
+
+  // Pretty standard for range functions (see the range on lists)
+  const start = (Number(page) - 1) * Number(limit);
+  const end = start + Number(limit) - 1;
+
+  try {
+    const client = await initializeRedisClient();
+
+    // gets all restaurant ids in a range, sorted by their rating, in reverse (so largest first)
+    const restaurantIds = await client.zRange(
+      restaurantByRatingKey,
+      start,
+      end,
+      {
+        REV: true,
+      },
+    );
+
+    // Then this is pretty standard as well (from all of the other times I've done it)
+    // And you just loop through all the ids and get the restaurant information
+    const restaurants = await Promise.all(
+      restaurantIds.map((id) => client.hGetAll(restaurantKeyById(id))),
+    );
+
+    return successResponse(res, restaurants);
+  } catch (err) {
+    next(err);
+  }
+});
+
 // Note that the post request won't go through until its been validated
 router.post("/", validate(RestaurantSchema), async (req, res, next) => {
   const data = req.body as Restaurant;
