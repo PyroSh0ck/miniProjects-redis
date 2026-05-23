@@ -35,3 +35,6 @@ export const restaurantDetailsKeyById = (id: string) =>
 
 // Helper function for indexing (there's only going to be one kind of key)
 export const indexKey = getKeyName("idx", "restaurants");
+
+// Helper function for bloom filters
+export const bloomKey = getKeyName("bloom_restaurants");
