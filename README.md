@@ -131,3 +131,10 @@ full-text search, incremental indexing on documents, etc.
 
 Note, to create the index initially, you'd need to run the script
 and the cmd is: `pnpm dlx tsx seed/createIndex.ts`
+
+### Bloom Filters
+
+Bloom filters are the last thing that's going to be implemented in this
+branch, but basically they check for the "presence of an element in a set."
+I'm basically going to use this so that you don't get duplicate restaurants
+(i.e. restaurants with the same name or the same location)
