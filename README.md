@@ -137,5 +137,7 @@ and the cmd is: `pnpm dlx tsx seed/createIndex.ts`
 Bloom filters are the last thing that's going to be implemented in this
 branch, but basically they check for the "presence of an element in a set."
 I'm basically going to use this so that you don't get duplicate restaurants
-(i.e. restaurants with the same name or the same location). This one also 
-a separate script to build it (just like an index for redis search)
+(i.e. restaurants with the same name or the same location). This one also
+a separate script to build it (just like an index for redis search).
+
+The command for this one is also: `pnpm dlx tsx seed/bloomFilter.ts`
