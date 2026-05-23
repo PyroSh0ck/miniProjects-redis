@@ -128,4 +128,3 @@ defines all the different fields and type (so like hash, set, list, etc)
 that you'll be querying through. It's a powerful querying language, and
 you can do stuff like geospatial queries, aggregations, vector search,
 full-text search, incremental indexing on documents, etc.
-
