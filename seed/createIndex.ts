@@ -1,4 +1,4 @@
-import { SchemaFieldTypes } from "redis";
+import { SCHEMA_FIELD_TYPE } from "redis";
 import { initializeRedisClient } from "../utils/client.js";
 import { indexKey, getKeyName } from "../utils/keys.js";
 
@@ -20,33 +20,35 @@ async function createIndex() {
   // Note that the second argument is the Redis search schema
   // With the first object being the fields we want to search
   // through. The bigger this is though, the slower it'll be
-  // since Redis will recalc the index on every update. The 
+  // since Redis will recalc the index on every update. The
   // second object is for us to tell Redis where to look
   // like the hashes, the sets, etc
-  await client.ft.create(indexKey, {
+  await client.ft.create(
+    indexKey,
     {
       id: {
-        type: SchemaFieldTypes.TEXT,
+        type: SCHEMA_FIELD_TYPE.TEXT,
         AS: "id",
         // You could optionally write SORTABLE here
       },
       name: {
-        type: SchemaFieldTypes.TEXT,
-        AS: "name"
+        type: SCHEMA_FIELD_TYPE.TEXT,
+        AS: "name",
       },
       avgStars: {
-        type: SchemaFieldTypes.NUMERIC,
+        type: SCHEMA_FIELD_TYPE.NUMERIC,
         AS: "avgStars",
-        SORTABLE: true
-      }
-    }, {
+        SORTABLE: true,
+      },
+    },
+    {
       ON: "HASH",
       // Since this is specifically the index for restaurants
-      PREFIX: getKeyName("restaurants")
-    }
-  });
+      PREFIX: getKeyName("restaurants"),
+    },
+  );
 }
 
 // We have to actually run the function then exit the file
 await createIndex();
-process.exit()
+process.exit();

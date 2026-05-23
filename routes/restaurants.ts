@@ -19,6 +19,7 @@ import {
   restaurantByRatingKey,
   weatherKeyById,
   restaurantDetailsKeyById,
+  indexKey,
 } from "../utils/keys.js";
 import { errorResponse, successResponse } from "../utils/responses.js";
 import { checkRestaurantExists } from "../middlewares/checkRestaurantId.js";
@@ -103,6 +104,16 @@ router.post("/", validate(RestaurantSchema), async (req, res, next) => {
   }
 });
 
+router.get("/search", async (req, res, next) => {
+  const { name } = req.query; // gettin all the query params
+  try {
+    const client = await initializeRedisClient();
+    const results = await client.ft.search(indexKey, `@name:${name}`);
+    return successResponse(res, results);
+  } catch (err) {
+    next(err);
+  }
+});
 router.post(
   "/:restaurantId/details",
   checkRestaurantExists,
