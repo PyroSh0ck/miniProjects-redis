@@ -112,3 +112,9 @@ Here are some functions:
 Now, the project will be interacting with a third-party API for tracking
 weather in the locations of the restaurants. I'll be storing that weather
 for that location in the cache, with a TTL(expiry time) of 1 hour.
+
+### Redis JSON
+
+One more thing Redis can do is store complex JSON objects (although
+this functionality is only available via Redis stack or a separate
+Redis docker image). I'll still be adding it though. 
