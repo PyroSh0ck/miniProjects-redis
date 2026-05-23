@@ -12,6 +12,7 @@ import {
   reviewDetailsKeyById,
   reviewKeyById,
   restaurantByRatingKey,
+  weatherKeyById,
 } from "../utils/keys.js";
 import { errorResponse, successResponse } from "../utils/responses.js";
 import { checkRestaurantExists } from "../middlewares/checkRestaurantId.js";
@@ -96,6 +97,69 @@ router.post("/", validate(RestaurantSchema), async (req, res, next) => {
   }
 });
 
+router.get(
+  "/:restaurantId/weather",
+  checkRestaurantExists,
+  async (req: Request<{ restaurantId: string }>, res, next) => {
+    const { restaurantId } = req.params;
+
+    try {
+      // Typical setup
+      const client = await initializeRedisClient();
+      const weatherKey = weatherKeyById(restaurantId);
+
+      // This is checking to see whether the weather
+      // data has already been cached or not
+      const cachedWeather = await client.get(weatherKey);
+
+      // if it is cached we can just use that
+      // We do have to run JSON.parse on it, since it is stored as
+      // stringified JSON, and we want a JSON object
+      if (cachedWeather) {
+        console.log("Cache hit!");
+        return successResponse(res, JSON.parse(cachedWeather));
+      }
+
+      // Otherwise, we'll need the restaurant key to get the location
+      const restaurantKey = restaurantKeyById(restaurantId);
+      const coordinates = await client.hGet(restaurantKey, "location");
+
+      // Error handling for the coordinates
+      if (!coordinates) {
+        return errorResponse(res, 404, "Coordinates have not been found");
+      }
+
+      // This is the call to the api, there is like one more optional query
+      // param, but I don't think its relevant. Also I included error handling
+      // for the case where there is no API key
+      const [long, lat] = coordinates.split(",");
+
+      if (!process.env.WEATHER_API_KEY) {
+        return errorResponse(res, 500, "No API key found for weather data");
+      }
+      const apiResponse = await fetch(
+        `https://api.openweathermap.org/data/3.0/onecall?units=imperial&lat=${lat}&lon=${long}&appid=${process.env.WEATHER_API_KEY}`,
+      );
+
+      // This is for processing the result, and for adding it to
+      // the Redis cache. I also added the 1 hour TTL, which is 
+      // added via the extra option and the EX field (expiry). 
+      // It takes an input of seconds in, so you'd use 60*60 = 
+      // 3600 seconds for an hour
+      if (apiResponse.status === 200) {
+        const json = await apiResponse.json();
+        await client.set(weatherKey, JSON.stringify(json), {
+          EX: 60 * 60,
+        });
+        return successResponse(res, json);
+      }
+
+      return errorResponse(res, 500, "Couldn't fetch weather information");
+    } catch (err) {
+      next(err);
+    }
+  },
+);
 // Express will match all of the endpoints in the order that we define them.
 // So if you have something like /:restaurantId that should be at the bottom.
 // For example, if you put /:restaurantId/beans, it would take "restaurantId/beans"
