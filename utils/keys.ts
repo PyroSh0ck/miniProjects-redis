@@ -24,4 +24,4 @@ export const restaurantCuisinesKeyById = (id: string) =>
   getKeyName("restaurant_cuisine", id);
 
 // This is the helper function for sorted sets:
-export const restaurantByRatingkey = getKeyName("restaurants_by_rating");
+export const restaurantByRatingKey = getKeyName("restaurants_by_rating");
