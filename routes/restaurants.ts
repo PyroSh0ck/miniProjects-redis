@@ -105,6 +105,8 @@ router.post("/", validate(RestaurantSchema), async (req, res, next) => {
         score: 0,
         value: id,
       }),
+
+      client.bf.add(bloomKey, bloomString);
     ]);
 
     // Return a success (with the hash data in case you want to use it in the frontend)
