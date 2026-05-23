@@ -117,4 +117,4 @@ for that location in the cache, with a TTL(expiry time) of 1 hour.
 
 One more thing Redis can do is store complex JSON objects (although
 this functionality is only available via Redis stack or a separate
-Redis docker image). I'll still be adding it though. 
+Redis docker image). I'll still be adding it though.
