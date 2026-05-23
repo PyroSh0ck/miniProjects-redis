@@ -30,4 +30,8 @@ export const restaurantByRatingKey = getKeyName("restaurants_by_rating");
 export const weatherKeyById = (id: string) => getKeyName("weather", id);
 
 // Helper function for RedisJSON:
-export const restaurantDetailsKeyById = (id: string) => getKeyName("restaurant_details", id);
+export const restaurantDetailsKeyById = (id: string) =>
+  getKeyName("restaurant_details", id);
+
+// Helper function for indexing (there's only going to be one kind of key)
+export const indexKey = getKeyName("idx", "restaurants");
